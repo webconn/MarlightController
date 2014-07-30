@@ -2,15 +2,10 @@
 
 MarlightController::MarlightController(QString *s, int p)
 {
-    // create socket
-    socket = new QUdpSocket();
+    MarlightController();
 
-    // save server address and port
-    server = new QHostAddress(*s);
-    port = p;
-
-    // setup default channels value to 0
-    channels = 0;
+    // setup connection settings
+    setConnection(s, p);
 }
 
 MarlightController::MarlightController(QString *s)
@@ -18,9 +13,31 @@ MarlightController::MarlightController(QString *s)
     MarlightController(s, 50000);
 }
 
+MarlightController::MarlightController()
+{
+    // create socket
+    socket = new QUdpSocket();
+
+    // setup default channels value to 0
+    channels = 0;
+}
+
+void MarlightController::setConnection(QString *s, int p)
+{    
+    // save server address and port
+    if (server)
+            delete server;
+
+    server = new QHostAddress(*s);
+    port = p;
+}
+
 // Send datagram for each selected channel
 void MarlightController::sendData(QByteArray *data)
 {
+    if (!server)
+        return;
+
     unsigned char cmd_buf[2] = { 0, 0x55 };
 
     for (int i=0; i<4; i++) {
@@ -106,6 +123,9 @@ void MarlightController::resetValues()
 
 void MarlightController::powerOn()
 {
+    if (!server)
+            return;
+
     unsigned char cmd_buf[2] = { 0, 0x55 };
     if (channels == 0x0F) { // there is a special command to turn on all channels
         cmd_buf[0] = 0x01; // command: turn all channels on
@@ -122,6 +142,9 @@ void MarlightController::powerOn()
 
 void MarlightController::powerOff()
 {
+    if (!server)
+        return;
+
     unsigned char cmd_buf[2] = { 0, 0x55 };
     if (channels == 0x0F) { // there is a special command to turn off all channels
         cmd_buf[0] = 0x02; // command: turn all channels off
@@ -138,7 +161,7 @@ void MarlightController::powerOff()
 
 void MarlightController::writeRGBValue(int r, int g, int b)
 {
-    unsigned char cmd_buf[] = { 0x13, r, g, b, 0x55 }; // command: write rgb value
+    unsigned char cmd_buf[] = { 0x13, (unsigned char) r, (unsigned char) g, (unsigned char) b, 0x55 }; // command: write rgb value
 
     sendData(*QByteArray::fromRawData((const char *) cmd_buf, sizeof(cmd_buf)));
 }
@@ -150,21 +173,21 @@ void MarlightController::setPresetMode(enum preset_t preset)
 
 void MarlightController::timerPreset(int h1, int m1, int h2, int m2)
 {
-    unsigned char cmd_buf[] = { 0x18, h1, m1, h2, m2, 0x09, 0x14, 0x55 }; // command: mode_timer
+    unsigned char cmd_buf[] = { 0x18, (unsigned char) h1, (unsigned char) m1, (unsigned char) h2, (unsigned char) m2, 0x09, 0x14, 0x55 }; // command: mode_timer
 
     sendData(*QByteArray::fromRawData((const char *) cmd_buf, sizeof(cmd_buf)));
 }
 
 void MarlightController::alarmPreset(int h1, int m1)
 {
-    unsigned char cmd_buf[] = { 0x19, h1, m1, 0x09, 0x14, 0x55 }; // command: mode_alarm
+    unsigned char cmd_buf[] = { 0x19, (unsigned char) h1, (unsigned char) m1, 0x09, 0x14, 0x55 }; // command: mode_alarm
 
     sendData(*QByteArray::fromRawData((const char *) cmd_buf, sizeof(cmd_buf)));
 }
 
 void MarlightController::recreationPreset(int r, int g, int b)
 {
-    unsigned char cmd_buf[] = { 0x1B, r, g, b, 0x55 }; // command: mode_recreation
+    unsigned char cmd_buf[] = { 0x1B, (unsigned char) r, (unsigned char) g, (unsigned char) b, 0x55 }; // command: mode_recreation
 
     sendData(*QByteArray::fromRawData((const char *) cmd_buf, sizeof(cmd_buf)));
 }

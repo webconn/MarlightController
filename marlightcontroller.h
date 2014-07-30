@@ -3,6 +3,7 @@
 
 #include "marlightcontroller_global.h"
 #include <QUdpSocket>
+#include <QByteArray>
 #include <string>
 
 class MARLIGHTCONTROLLERSHARED_EXPORT MarlightController
@@ -14,6 +15,11 @@ public:
 
     MarlightController(QString *server, int port);
     MarlightController(QString *server); // for default port 50000
+    MarlightController(); // for external connection settings
+
+    ~MarlightController() { delete socket; delete server; }
+
+    void setConnection(QString *server, int port);
 
     void selectChannels(int ch);
     void setMode(enum mode_t mode);
